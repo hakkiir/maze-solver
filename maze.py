@@ -56,7 +56,7 @@ class Maze():
         if self._win is None:
             return
         self._win.redraw()
-        time.sleep(0.05)
+        time.sleep(0.025)
 
     def _break_entrance_and_exit(self):
         self._cells[0][0].has_top_wall = False
@@ -108,3 +108,62 @@ class Maze():
         for cols in self._cells:
             for cell in cols:
                 cell.visited = False
+
+
+    def solve(self):
+        return self._solve_r(0, 0)
+
+
+    def _solve_r(self, i, j):
+        self._animate()
+
+        cur = self._cells[i][j]
+        cur.visited = True
+
+        #if 'end' cell return True
+        if i == self._num_cols-1 and j == self._num_rows-1:
+            return True
+        #up
+        if (j > 0 
+        and not self._cells[i][j-1].visited 
+        and not cur.has_top_wall
+        ):
+            cur.draw_move(self._cells[i][j-1])
+            if self._solve_r(i, j-1):
+                return True
+            else: #undo
+                cur.draw_move(self._cells[i][j-1], True)
+        #down       
+        if (j < self._num_rows-1
+        and not self._cells[i][j+1].visited 
+        and not cur.has_bottom_wall
+        ):
+            cur.draw_move(self._cells[i][j+1])
+            
+            if self._solve_r(i, j+1):
+                return True
+            else: #undo
+                cur.draw_move(self._cells[i][j+1], True)
+        #right
+        if (i < self._num_cols-1
+            and not self._cells[i+1][j].visited 
+            and not cur.has_right_wall
+        ):
+            cur.draw_move(self._cells[i+1][j])
+            if self._solve_r(i+1, j):
+                return True
+            else: #undo
+                cur.draw_move(self._cells[i+1][j], True)
+        #left
+        if (i > 0 
+            and not self._cells[i-1][j].visited 
+            and not cur.has_left_wall
+        ):
+            cur.draw_move(self._cells[i-1][j])
+            if self._solve_r(i-1, j):
+                return True
+            else: #undo
+                cur.draw_move(self._cells[i-1][j], True)
+        return False
+        
+        
