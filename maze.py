@@ -1,5 +1,7 @@
 from cell import Cell
-import time
+import time, random
+
+
 class Maze():
     def __init__(
         self, 
@@ -10,6 +12,7 @@ class Maze():
         cell_size_x,
         cell_size_y,
         win=None,
+        seed=None
     ):
         self._x1 = x1
         self._y1 = y1
@@ -20,9 +23,13 @@ class Maze():
         self._win = win
 
         self._cells = []
-        
+        if seed is not None:
+            self._seed = random.seed(seed)
+
         self._create_cells()
         self._break_entrance_and_exit()
+        self._break_walls_r(0, 0)
+        self._reset_cells_visited()
 
     def _create_cells(self):
         for i in range(self._num_cols):
@@ -49,10 +56,55 @@ class Maze():
         if self._win is None:
             return
         self._win.redraw()
-        time.sleep(0.025)
+        time.sleep(0.05)
 
     def _break_entrance_and_exit(self):
         self._cells[0][0].has_top_wall = False
         self._draw_cell(0,0)
         self._cells[self._num_cols - 1][self._num_rows - 1].has_bottom_wall = False
         self._draw_cell(self._num_cols - 1, self._num_rows - 1)
+
+    def _break_walls_r(self, i, j):
+        self._cells[i][j].visited=True
+        while True:
+            to_visit = []
+            if j > 0:
+                if not self._cells[i][j-1].visited:
+                    to_visit.append("up")
+            if j < self._num_rows-1:
+                if not self._cells[i][j+1].visited:
+                    to_visit.append("down")
+            if i < self._num_cols-1:
+                if not self._cells[i+1][j].visited:
+                    to_visit.append("right")
+            if i > 0:
+                if not self._cells[i-1][j].visited:
+                    to_visit.append("left")
+
+            if len(to_visit) == 0:
+                self._draw_cell(i,j)
+                return
+            else:
+                dir = random.choice(to_visit)
+
+            if dir == "up":
+                self._cells[i][j].has_top_wall = False
+                self._cells[i][j-1].has_bottom_wall = False
+                self._break_walls_r(i, j-1)
+            if dir == "down":
+                self._cells[i][j].has_bottom_wall = False
+                self._cells[i][j+1].has_top_wall = False
+                self._break_walls_r(i, j+1)
+            if dir == "right":
+                self._cells[i][j].has_right_wall = False
+                self._cells[i+1][j].has_left_wall = False
+                self._break_walls_r(i+1, j)
+            if dir == "left":
+                self._cells[i][j].has_left_wall = False
+                self._cells[i-1][j].has_right_wall = False
+                self._break_walls_r(i-1, j)
+    
+    def _reset_cells_visited(self):
+        for cols in self._cells:
+            for cell in cols:
+                cell.visited = False
